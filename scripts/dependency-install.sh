@@ -1,14 +1,12 @@
 #!/bin/bash
 
-echo "⏳🚀 Step 2: Installing dependencies..."
+echo "#########################################################################################"
+echo "#                         ⏳ STEP 2: INSTALLING DEPENDENCIES 🚀                         #"
+echo "#########################################################################################"
 
-echo "⏳🚀 Updating repository..."
 sudo apt update -y
-echo "✅ Done!"
-
-echo "⏳🚀 Installing dependencies..."
 sudo apt install curl jq git -y
-echo "✅ Done!"
 
-echo "✅ Installing dependencies Complete!"
-echo "_____________________________________________________________"
+echo "#########################################################################################"
+echo "#                      ✅ DEPENDENCIES INSTALLED SUCCESSFULLY! 🎉                       #"
+echo "#########################################################################################"

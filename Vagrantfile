@@ -1,7 +1,7 @@
 base_ip = "192.168.8"
 gateway = "#{base_ip}.1"
 num_of_masters = 1
-num_of_workers = 1
+num_of_workers = 2
 netmask = "255.255.255.0"
 def get_bridge_adapter()
   return %x{powershell -Command "Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Get-NetAdapter | Select-Object -ExpandProperty InterfaceDescription"}.chomp
@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
     masters.vm.provider "virtualbox" do |vbox|
       vbox.name = "ControlPlane#{i}"
       vbox.memory = 4096
-      vbox.cpus = 3
+      vbox.cpus = 4
       vbox.default_nic_type = "82540EM"
       vbox.customize ["modifyvm", :id,"--nicpromisc2", "allow-all"]
     end
