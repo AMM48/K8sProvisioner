@@ -1,2 +1,2 @@
-k3s-token.sh
-.vagrant/
+**/*token.sh
+**/.vagrant/
