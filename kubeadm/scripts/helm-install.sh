@@ -26,7 +26,7 @@ retries "helm install prom-stack prometheus-community/kube-prometheus-stack -n m
 retries "helm install argo-cd argo/argo-cd -n argocd --create-namespace" "Failed to install ArgoCD helm chart."
 retries "helm install sealed-secrets -n kube-system --set-string fullnameOverride=sealed-secrets-controller sealed-secrets/sealed-secrets" "Failed to install Sealed-Secrets helm chart."
 
-retries kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.29/deploy/local-path-storage.yaml "Failed to install Local-Path-Storage."
+retries "kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.29/deploy/local-path-storage.yaml" "Failed to install Local-Path-Storage."
 kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 
 echo "#########################################################################################"

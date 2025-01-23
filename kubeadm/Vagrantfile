@@ -1,12 +1,27 @@
-base_ip = "192.168.8"
-gateway = "#{base_ip}.1"
+def get_bridge_adapter()
+  return `powershell -NoProfile -Command "Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Get-NetAdapter | Select-Object -ExpandProperty InterfaceDescription"`.strip
+end
+
+def get_base_ip()
+  interface_name = `powershell -NoProfile -Command "Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Get-NetAdapter | Select-Object -ExpandProperty name"`.strip
+  ip = `powershell -NoProfile -Command "Get-NetIPAddress -InterfaceAlias '#{interface_name}' -AddressFamily IPv4 | Select-Object -ExpandProperty IPAddress"`.strip
+  return ip.sub(/\.\d+$/, '')
+end
+
+def get_gateway()
+  return `powershell -NoProfile -Command "Get-NetRoute | where {$_.DestinationPrefix -eq '0.0.0.0/0'} | Select-Object -ExpandProperty NextHop"`.strip
+end
+
+def get_subnet_mask()
+  adapter = get_bridge_adapter()
+  return `powershell -NoProfile -Command "get-Wmiobject win32_NetworkAdapterConfiguration | Where-object {$_.Description -eq '#{adapter}'} | Select-Object -ExpandProperty IPSubnet | Select-Object -First 1"`.strip
+end
+
+base_ip = get_base_ip()
+gateway = get_gateway()
+netmask = get_subnet_mask()
 num_of_masters = 1
 num_of_workers = 2
-netmask = "255.255.255.0"
-
-def get_bridge_adapter()
-  return %x{powershell -Command "Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Get-NetAdapter | Select-Object -ExpandProperty InterfaceDescription"}.chomp
-end
 
 Vagrant.configure("2") do |config|
   bridged_interface = get_bridge_adapter()
