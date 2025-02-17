@@ -1,0 +1,85 @@
+def get_bridge_adapter()
+  return `powershell -NoProfile -Command "Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Get-NetAdapter | Select-Object -ExpandProperty InterfaceDescription"`.strip
+end
+
+def get_interface()
+  return `powershell -NoProfile -Command "Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Get-NetAdapter | Select-Object -ExpandProperty name"`.strip
+end
+
+def get_base_ip()
+  interface_name = get_interface()
+  ip = `powershell -NoProfile -Command "Get-NetIPAddress -InterfaceAlias '#{interface_name}' -AddressFamily IPv4 | Select-Object -ExpandProperty IPAddress"`.strip
+  return ip.sub(/\.\d+$/, '')
+end
+
+def get_gateway()
+  return `powershell -NoProfile -Command "Get-NetRoute | where {$_.DestinationPrefix -eq '0.0.0.0/0'} | Select-Object -ExpandProperty NextHop"`.strip
+end
+
+def get_cidr()
+  interface_name = get_interface()
+  return `powershell -NoProfile -Command "Get-NetIPAddress -InterfaceAlias '#{interface_name}' -AddressFamily IPv4 | Select-Object -ExpandProperty PrefixLength"`.strip
+end
+
+base_ip = get_base_ip()
+gateway = get_gateway()
+cidr = get_cidr()
+num_of_masters = 1
+num_of_workers = 2
+
+Vagrant.configure("2") do |config|
+  bridged_interface = get_bridge_adapter()
+  config.vm.box = "generic/rocky9"
+  config.vm.synced_folder ".", "/vagrant"
+
+ (1..num_of_masters).each do |i|
+  config.vm.define "controlplane#{i}" do |masters|
+    host_id = 1 + i
+    ip_address = "#{base_ip}.#{host_id}"
+    masters.disksize.size = "50GB"
+    masters.vm.network "public_network", bridge: bridged_interface, auto_config: false
+    masters.vm.hostname = "controlplane#{i}"
+    masters.vm.provider "virtualbox" do |vbox|
+      vbox.name = "RHEL-ControlPlane#{i}"
+      vbox.memory = 6144
+      vbox.cpus = 5
+      vbox.customize ["modifyvm", :id, "--ioapic", "on"]
+      vbox.default_nic_type = "82540EM"
+      vbox.customize ["modifyvm", :id,"--nicpromisc2", "allow-all"]
+    end
+    masters.vm.provision "shell", privileged: false, path: "./scripts/network-setup.sh", args: [ip_address, cidr, gateway]
+    masters.vm.provision "shell", privileged: false, path: "./scripts/dependency-install.sh"
+    masters.vm.provision "shell", privileged: false, path: "./scripts/containerd-install.sh"
+    masters.vm.provision "shell", privileged: false, path: "./scripts/k8s-setup.sh"
+    masters.vm.provision "shell", privileged: false, path: "./scripts/firewall-setup.sh", args: ["control-plane"]
+    masters.vm.provision "shell", privileged: false, path: "./scripts/k8s-install.sh", args: [ip_address]
+    masters.vm.provision "shell", privileged: false, path: "./scripts/helm-install.sh"
+    # masters.vm.provision "shell", privileged: false, path: "./scripts/kubeseal-client-install.sh"
+    # masters.vm.provision "shell", privileged: false, path: "./scripts/metallb-configure.sh"
+  end
+  
+ (1..num_of_workers).each do |i|
+  config.vm.define "worker#{i}" do |workers|
+    host_id = 10 + i
+    ip_address = "#{base_ip}.#{host_id}"
+    workers.disksize.size = "50GB"
+    workers.vm.network "public_network", bridge: bridged_interface, auto_config: false
+    workers.vm.hostname = "worker#{i}"
+    workers.vm.provider "virtualbox" do |vbox|
+      vbox.name = "RHEL-Worker#{i}"
+      vbox.memory = 2048
+      vbox.cpus = 3
+      vbox.customize ["modifyvm", :id, "--ioapic", "on"]
+      vbox.default_nic_type = "82540EM"
+      vbox.customize ["modifyvm", :id,"--nicpromisc2", "allow-all"]
+    end
+    workers.vm.provision "shell", privileged: false, path: "./scripts/network-setup.sh", args: [ip_address, cidr, gateway]
+    workers.vm.provision "shell", privileged: false, path: "./scripts/dependency-install.sh"
+    workers.vm.provision "shell", privileged: false, path: "./scripts/containerd-install.sh"
+    workers.vm.provision "shell", privileged: false, path: "./scripts/k8s-setup.sh"
+    workers.vm.provision "shell", privileged: false, path: "./scripts/firewall-setup.sh"
+    workers.vm.provision "shell", privileged: false, path: "./scripts/k8s-join.sh"
+   end
+  end
+ end
+end
