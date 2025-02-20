@@ -20,9 +20,10 @@ sudo nmcli connection modify "$INTERFACE" connection.id "$DEVICE"
 
 # Get the Bridge Interface by its new name and configure the Interface
 INTERFACE=$(sudo nmcli -t -f CONNECTION device | awk -F: 'NR==1 {print $1}' | xargs)
+
 sudo nmcli connection modify "$INTERFACE" ipv4.addresses "$IP_ADDRESS"/"$CIDR"
 sudo nmcli connection modify "$INTERFACE" ipv4.gateway "$GATEWAY"
-sudo nmcli connection modify "$INTERFACE" ipv4.dns "8.8.8.8 8.8.4.4"
+sudo nmcli connection modify "$INTERFACE" ipv4.dns "$GATEWAY"
 sudo nmcli connection modify "$INTERFACE" ipv4.method manual
 sudo nmcli connection up "$INTERFACE"
 

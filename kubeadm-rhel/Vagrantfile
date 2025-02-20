@@ -54,8 +54,8 @@ Vagrant.configure("2") do |config|
     masters.vm.provision "shell", privileged: false, path: "./scripts/firewall-setup.sh", args: ["control-plane"]
     masters.vm.provision "shell", privileged: false, path: "./scripts/k8s-install.sh", args: [ip_address]
     masters.vm.provision "shell", privileged: false, path: "./scripts/helm-install.sh"
-    # masters.vm.provision "shell", privileged: false, path: "./scripts/kubeseal-client-install.sh"
-    # masters.vm.provision "shell", privileged: false, path: "./scripts/metallb-configure.sh"
+    masters.vm.provision "shell", privileged: false, path: "./scripts/kubeseal-client-install.sh"
+    masters.vm.provision "shell", privileged: false, path: "./scripts/metallb-configure.sh"
   end
   
  (1..num_of_workers).each do |i|

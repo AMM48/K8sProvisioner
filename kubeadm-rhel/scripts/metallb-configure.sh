@@ -11,7 +11,7 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-  - 192.168.176.2-192.168.176.20" > pool.yaml
+  - 192.168.208.30-192.168.208.35" > pool.yaml
 
 echo "apiVersion: metallb.io/v1beta1
 kind: L2Advertisement
