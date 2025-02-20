@@ -104,16 +104,18 @@ sudo systemctl enable --now kubelet
 ## **Step 4** - Allow Required Ports (Control-Plane, Worker)
 ### Control-Plane Ports
 ```bash
-sudo firewall-cmd --add-port=6443/tcp --add-port=2379-2380/tcp --add-port=10250/tcp --add-port=10259/tcp --add-port=10257/tcp --add-port=10256/tcp --add-port=30000-32767/tcp --permanent
+sudo firewall-cmd --add-port=6443/tcp --add-port=2379-2380/tcp --add-port=10250/tcp --add-port=10259/tcp --add-port=10257/tcp --add-port=10256/tcp --add-port=30000-32767/tcp --add-port=8472/udp --add-port=53/udp --add-port=53/tcp --add-port=4240/tcp --permanent
 
 sudo firewall-cmd --reload
 ```
 ### Worker Node Ports
 ```bash
-sudo firewall-cmd --add-port=10250/tcp --add-port=10256/tcp --add-port=30000-32767/tcp --permanent
+sudo firewall-cmd --add-port=10250/tcp --add-port=10256/tcp --add-port=30000-32767/tcp --add-port=8472/udp --add-port=53/udp --add-port=53/tcp --add-port=4240/tcp --permanent
 
 sudo firewall-cmd --reload
 ```
+**Important:** Ports 4240 and 8472 are essential for Cilium. Depending on the Container Network Interface (CNI) in use, adjustments to these ports may be necessary.
+
 ## **Step 5** - Create Kubernetes Cluster (Control-Plane)
 ### Initialize Control-Plane
 ```bash
@@ -153,4 +155,4 @@ helm install metrics-server metrics-server/metrics-server --set replicas=3  --se
 ```bash
 sudo kubeadm join 192.168.176.50:6443 --token woags4.ssgf7r270hu6ae7y --discovery-token-ca-cert-hash sha256:77441a4fb4f63425a38ace269c212432dd38d1bfcdbe168a36018608c3c76ee5
 ```
-**Note:** Replace the kubeadm join command with the one generated with `kubeadm init`, or generate a new one with `kubeadm token create --print-join-command` in the Control-Plane.
+**Important:** Replace the kubeadm join command with the one generated with `kubeadm init`, or generate a new one with `kubeadm token create --print-join-command` in the Control-Plane.
